@@ -30,7 +30,7 @@ jobs:
 
       - name: Run Extractor.py
         # Remove --ignore-market-hours once you confirm it works and want it to obey NSE hours
-        run: python Extractor.py --ignore-market-hours
+        run: python Extractor.py 
 
       - name: Commit and push database
         run: |
