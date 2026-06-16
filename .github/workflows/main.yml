@@ -1,0 +1,42 @@
+name: Fetch NSE Options Data
+
+on:
+  schedule:
+    # Runs every 15 minutes, Mon-Fri, 03:00 - 10:00 UTC (approx 08:30 - 15:30 IST).
+    # The script's internal is_market_open() check will safely block runs outside exact trading hours.
+    - cron: '*/15 3-10 * * 1-5'
+  workflow_dispatch: # Allows you to click a button to run it manually for testing
+
+# Give the Action permission to push the updated database back to your repo
+permissions:
+  contents: write 
+
+jobs:
+  run-extractor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run Extractor.py
+        # Remove --ignore-market-hours once you confirm it works and want it to obey NSE hours
+        run: python Extractor.py --ignore-market-hours
+
+      - name: Commit and push database
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add nse_options_data.db
+          # The '|| echo' prevents the workflow from crashing if the market is closed and no DB was updated
+          git commit -m "Auto-update NSE option chain database" || echo "No changes to commit"
+          git push
